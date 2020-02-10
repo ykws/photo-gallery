@@ -51,9 +51,7 @@ export function usePhotoGallery() {
     const fileName = new Date().getTime() + '.jpg';
     const saveFileImage = await savePicture(cameraPhoto, fileName);
     const newPhotos = [saveFileImage, ...photos];
-    // FIXME: Argument of type ... is not assignable to parameter of type 'SetStateAction<Photo[]>'.
-    // `newPhotos` is not Photo[]
-    // setPhotos(newPhotos)
+    setPhotos(newPhotos)
 
     set(PHOTO_STORAGE, 
       isPlatform('hybrid')
@@ -62,9 +60,7 @@ export function usePhotoGallery() {
           // Don't save the base64 representation of the photo data,
           // since it's already saved on the Filesystem
           const photoCopy = { ...p };
-          // FIXME: Property 'base64' does not exist on type
-          // `photoCopy` is not Photo
-          // delete photoCopy.base64;
+          delete photoCopy.base64;
           return photoCopy;
         }))
     );
@@ -88,7 +84,7 @@ export function usePhotoGallery() {
     return getPhotoFile(photo, fileName);
   };
 
-  const getPhotoFile = async (cameraPhoto: CameraPhoto, fileName: string) => {
+  const getPhotoFile = async (cameraPhoto: CameraPhoto, fileName: string): Promise<Photo> => {
     if (isPlatform('hybrid')) {
       const fileUri = await getUri({
         directory: FilesystemDirectory.Data,
@@ -96,7 +92,7 @@ export function usePhotoGallery() {
       });
 
       return {
-        filePath: fileUri.uri,
+        filepath: fileUri.uri,
         webviewPath: Capacitor.convertFileSrc(fileUri.uri)
       };
     }
