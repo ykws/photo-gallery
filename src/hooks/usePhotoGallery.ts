@@ -6,6 +6,7 @@ import { isPlatform } from '@ionic/react';
 import { CameraResultType, CameraSource, CameraPhoto, Capacitor, FilesystemDirectory } from "@capacitor/core";
 import { save } from "ionicons/icons";
 
+const PHOTO_STORAGE = "photos";
 
 export interface Photo {
   filepath: string;
@@ -17,9 +18,27 @@ export function usePhotoGallery() {
 
   const { deleteFile, getUri, readFile, writeFile } = useFilesystem();
 
+  const { get, set } = useStorage();
+
   const { getPhoto } = useCamera();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
+
+  useEffect(() => {
+    const loadSaved = async () => {
+      const photosString = await get('photos');
+      const photos = (photosString ? JSON.parse(photosString) : []) as Photo[];
+      for (let photo of photos) {
+        const file = await readFile({
+          path: photo.filepath,
+          directory: FilesystemDirectory.Data
+        });
+        photo.base64 = `data:image/jpeg;base64,${file.data}`;
+      }
+      setPhotos(photos);
+    };
+    loadSaved();
+  }, [get, readFile]);
 
   const takePhoto = async () => {
     const cameraPhoto = await getPhoto({
@@ -32,6 +51,16 @@ export function usePhotoGallery() {
     const saveFileImage = await savePicture(cameraPhoto, fileName);
     const newPhotos = [saveFileImage, ...photos];
     setPhotos(newPhotos)
+
+    set(PHOTO_STORAGE, JSON.stringify(newPhotos.map(p => {
+      // Don't save the base64 representation of the photo data,
+      // since it's already saved on the Filesystem
+      const photoCopy = { ...p };
+      // FIXME: Property 'base64' does not exist on type
+      // `photoCopy` is not Photo
+      // delete photoCopy.base64;
+      return photoCopy;
+    })));
   };
 
   const savePicture = async (photo: CameraPhoto, fileName: string) => {
