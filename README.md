@@ -6,6 +6,10 @@
 
 :zap: [the complete app code referenced](https://github.com/ionic-team/photo-gallery-capacitor-react)
 
+## Requirements
+
+* [Ionic](https://github.com/ykws/hello-ionic)
+
 ## Get Started
 
 ```
